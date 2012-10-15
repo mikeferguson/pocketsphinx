@@ -1,0 +1,8 @@
+<launch>
+
+  <node name="recognizer" pkg="pocketsphinx" type="recognizer.py" output="screen">
+    <param name="lm" value="$(find pocketsphinx)/demo/robocup.lm"/>
+    <param name="dict" value="$(find pocketsphinx)/demo/robocup.dic"/>
+  </node>
+
+</launch>
