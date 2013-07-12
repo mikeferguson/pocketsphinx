@@ -54,11 +54,11 @@ class recognizer(object):
         # parameters for lm and dic
         try:
             lm_ = rospy.get_param('~lm')
-            asr.set_property('lm',lm_)
+            asr.set_property('lm', lm_)
         except:
             try:
-                fsg_ = rospy_get_param('~fsg')
-                asr.set_property('fsg',fsg_)
+                fsg_ = rospy.get_param('~fsg')
+                asr.set_property('fsg', fsg_)
             except:
                 rospy.logerr('Please specify a language model file or a fsg grammar file')
                 return
@@ -68,7 +68,7 @@ class recognizer(object):
             rospy.logerr('Please specify a dictionary')
             return
 
-        asr.set_property('dict',dict_)
+        asr.set_property('dict', dict_)
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message::application', self.application_message)
