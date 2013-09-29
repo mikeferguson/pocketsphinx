@@ -2,8 +2,8 @@
 Changelog for package pocketsphinx
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.2 (2013-09-29)
+------------------
 * Add changelog
 
 0.2.1 (2013-09-21)
