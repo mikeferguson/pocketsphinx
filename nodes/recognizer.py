@@ -5,6 +5,9 @@ recognizer.py is a wrapper for pocketsphinx.
   parameters:
     ~lm - filename of language model
     ~dict - filename of dictionary
+    ~mic_name - set the pulsesrc device name for the microphone input.
+                e.g. a Logitech G35 Headset has the following device name: alsa_input.usb-Logitech_Logitech_G35_Headset-00-Headset_1.analog-mono
+                To list audio device info on your machine, in a terminal type: pacmd list-sources
   publications:
     ~output (std_msgs/String) - text output
   services:
@@ -27,66 +30,111 @@ import gst
 
 from std_msgs.msg import String
 from std_srvs.srv import *
+import os
+import commands
 
 class recognizer(object):
     """ GStreamer based speech recognizer. """
 
     def __init__(self):
-        """ Initialize the speech pipeline components. """
-        rospy.init_node('recognizer')
-        self.pub = rospy.Publisher('~output',String)
-        rospy.on_shutdown(self.shutdown)
+        # Start node
+        rospy.init_node("recognizer")
 
-        # services to start/stop recognition
+        self._device_name_param = "~mic_name"  # Find the name of your microphone by typing pacmd list-sources in the terminal
+        self._lm_param = "~lm"
+        self._dic_param = "~dict"
+
+        # Configure mics with gstreamer launch config
+        if rospy.has_param(self._device_name_param):
+            self.device_name = rospy.get_param(self._device_name_param)
+            self.device_index = self.pulse_index_from_name(self.device_name)
+            self.launch_config = "pulsesrc device=" + str(self.device_index)
+            rospy.loginfo("Using: pulsesrc device=%s name=%s", self.device_index, self.device_name)
+        else:
+            self.launch_config = 'gconfaudiosrc'
+
+        rospy.loginfo("Launch config: %s", self.launch_config)
+
+        self.launch_config += " ! audioconvert ! audioresample " \
+                            + '! vader name=vad auto-threshold=true ' \
+                            + '! pocketsphinx name=asr ! fakesink'
+
+        # Configure ROS settings
+        self.started = False
+        rospy.on_shutdown(self.shutdown)
+        self.pub = rospy.Publisher('~output', String)
         rospy.Service("~start", Empty, self.start)
         rospy.Service("~stop", Empty, self.stop)
 
-        # configure pipeline
-        self.pipeline = gst.parse_launch('gconfaudiosrc ! audioconvert ! audioresample '
-                                         + '! vader name=vad auto-threshold=true '
-                                         + '! pocketsphinx name=asr ! fakesink')
-        asr = self.pipeline.get_by_name('asr')
-        asr.connect('partial_result', self.asr_partial_result)
-        asr.connect('result', self.asr_result)
-        asr.set_property('configured', True)
-        asr.set_property('dsratio', 1)
+        if rospy.has_param(self._lm_param) and rospy.has_param(self._dic_param):
+            self.start_recognizer()
+        else:
+            rospy.logwarn("lm and dic parameters need to be set to start recognizer.")
 
-        # parameters for lm and dic
-        try:
-            lm_ = rospy.get_param('~lm')
-            asr.set_property('lm', lm_)
-        except:
-            try:
-                fsg_ = rospy.get_param('~fsg')
-                asr.set_property('fsg', fsg_)
-            except:
-                rospy.logerr('Please specify a language model file or a fsg grammar file')
-                return
-        try:
-            dict_ = rospy.get_param('~dict')
-        except:
-            rospy.logerr('Please specify a dictionary')
+    def start_recognizer(self):
+        print "Starting recognizer... "
+
+        self.pipeline = gst.parse_launch(self.launch_config)
+        self.asr = self.pipeline.get_by_name('asr')
+        self.asr.connect('partial_result', self.asr_partial_result)
+        self.asr.connect('result', self.asr_result)
+        self.asr.set_property('configured', True)
+        self.asr.set_property('dsratio', 1)
+
+        # Configure language model
+        if rospy.has_param(self._lm_param):
+            lm = rospy.get_param(self._lm_param)
+        else:
+            rospy.logerr('Recognizer not started. Please specify a language model file.')
             return
 
-        asr.set_property('dict', dict_)
-        bus = self.pipeline.get_bus()
-        bus.add_signal_watch()
-        bus.connect('message::application', self.application_message)
-        self.start(None)
-        gtk.main()
-        
+        if rospy.has_param(self._dic_param):
+            dic = rospy.get_param(self._dic_param)
+        else:
+            rospy.logerr('Recognizer not started. Please specify a dictionary.')
+            return
+
+        self.asr.set_property('lm', lm)
+        self.asr.set_property('dict', dic)
+
+        self.bus = self.pipeline.get_bus()
+        self.bus.add_signal_watch()
+        self.bus_id = self.bus.connect('message::application', self.application_message)
+        self.pipeline.set_state(gst.STATE_PLAYING)
+        self.started = True
+
+    def pulse_index_from_name(self, name):
+        output = commands.getstatusoutput("pacmd list-sources | grep -B 1 'name: <" + name + ">' | grep -o -P '(?<=index: )[0-9]*'")
+
+        if len(output) == 2:
+            return output[1]
+        else:
+            raise Exception("Error. pulse index doesn't exist for name: " + name)
+
+    def stop_recognizer(self):
+        if self.started:
+            self.pipeline.set_state(gst.STATE_NULL)
+            self.pipeline.remove(self.asr)
+            self.bus.disconnect(self.bus_id)
+            self.started = False
+
     def shutdown(self):
+        """ Delete any remaining parameters so they don't affect next launch """
+        for param in [self._device_name_param, self._lm_param, self._dic_param]:
+            if rospy.has_param(param):
+                rospy.delete_param(param)
+
         """ Shutdown the GTK thread. """
         gtk.main_quit()
 
-    def start(self, msg):
-        self.pipeline.set_state(gst.STATE_PLAYING)
+    def start(self, req):
+        self.start_recognizer()
+        print "recognizer started"
         return EmptyResponse()
 
-    def stop(self):
-        self.pipeline.set_state(gst.STATE_PAUSED)
-        #vader = self.pipeline.get_by_name('vad')
-        #vader.set_property('silent', True)
+    def stop(self, req):
+        self.stop_recognizer()
+        print "recognizer stopped"
         return EmptyResponse()
 
     def asr_partial_result(self, asr, text, uttid):
@@ -122,6 +170,7 @@ class recognizer(object):
         rospy.loginfo(msg.data)
         self.pub.publish(msg)
 
-if __name__=="__main__":
-    r = recognizer()
+if __name__ == "__main__":
+    start = recognizer()
+    gtk.main()
 
