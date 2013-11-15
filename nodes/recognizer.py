@@ -72,7 +72,7 @@ class recognizer(object):
             rospy.logwarn("lm and dic parameters need to be set to start recognizer.")
 
     def start_recognizer(self):
-        print "Starting recognizer... "
+        rospy.loginfo("Starting recognizer... ")
 
         self.pipeline = gst.parse_launch(self.launch_config)
         self.asr = self.pipeline.get_by_name('asr')
@@ -129,12 +129,12 @@ class recognizer(object):
 
     def start(self, req):
         self.start_recognizer()
-        print "recognizer started"
+        rospy.loginfo("recognizer started")
         return EmptyResponse()
 
     def stop(self, req):
         self.stop_recognizer()
-        print "recognizer stopped"
+        rospy.loginfo("recognizer stopped")
         return EmptyResponse()
 
     def asr_partial_result(self, asr, text, uttid):
@@ -161,7 +161,7 @@ class recognizer(object):
 
     def partial_result(self, hyp, uttid):
         """ Delete any previous selection, insert text and select it. """
-        print "Partial: " + hyp
+        rospy.logdebug("Partial: " + hyp)
 
     def final_result(self, hyp, uttid):
         """ Insert the final result. """
