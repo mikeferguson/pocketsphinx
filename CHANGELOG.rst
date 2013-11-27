@@ -2,6 +2,11 @@
 Changelog for package pocketsphinx
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Convert print statements to rosinfo/rosdebugs
+* Change language model at runtime + specify audio source
+
 0.2.2 (2013-09-29)
 ------------------
 * Add changelog
