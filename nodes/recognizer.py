@@ -79,11 +79,11 @@ class recognizer(object):
         """ Shutdown the GTK thread. """
         gtk.main_quit()
 
-    def start(self, msg):
+    def start(self, req):
         self.pipeline.set_state(gst.STATE_PLAYING)
         return EmptyResponse()
 
-    def stop(self):
+    def stop(self, req):
         self.pipeline.set_state(gst.STATE_PAUSED)
         #vader = self.pipeline.get_by_name('vad')
         #vader.set_property('silent', True)
