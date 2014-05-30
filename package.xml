@@ -17,4 +17,5 @@
   <run_depend>std_srvs</run_depend>
   <run_depend>geometry_msgs</run_depend><!-- only needed for demos -->
   <run_depend>gstreamer0.10-pocketsphinx</run_depend>
+  <run_depend>python-gst</run_depend>
 </package>
