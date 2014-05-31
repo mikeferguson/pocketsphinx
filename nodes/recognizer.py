@@ -50,6 +50,9 @@ class recognizer(object):
             self.device_index = self.pulse_index_from_name(self.device_name)
             self.launch_config = "pulsesrc device=" + str(self.device_index)
             rospy.loginfo("Using: pulsesrc device=%s name=%s", self.device_index, self.device_name)
+        elif rospy.has_param('~source'):
+            # common sources: 'alsasrc'
+            self.launch_config = rospy.get_param('~source')
         else:
             self.launch_config = 'gconfaudiosrc'
 
