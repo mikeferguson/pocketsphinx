@@ -2,8 +2,8 @@
 Changelog for package pocketsphinx
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2014-06-03)
+------------------
 * add ~source parameter, for setting things like 'alsasrc'
 * add depend on python-gst
 * Contributors: Michael Ferguson
