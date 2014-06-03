@@ -2,6 +2,12 @@
 Changelog for package pocketsphinx
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add ~source parameter, for setting things like 'alsasrc'
+* add depend on python-gst
+* Contributors: Michael Ferguson
+
 0.3.0 (2013-11-27)
 ------------------
 * Convert print statements to rosinfo/rosdebugs
