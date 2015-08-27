@@ -106,6 +106,8 @@ class recognizer(object):
         self.pipeline.set_state(gst.STATE_PLAYING)
         self.started = True
 
+        rospy.loginfo('Recognizer started!')
+
     def pulse_index_from_name(self, name):
         output = commands.getstatusoutput("pacmd list-sources | grep -B 1 'name: <" + name + ">' | grep -o -P '(?<=index: )[0-9]*'")
 
