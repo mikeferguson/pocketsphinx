@@ -30,7 +30,8 @@ import gst
 
 from std_msgs.msg import String
 from std_srvs.srv import *
-import os
+from audio_common_msgs.msg import AudioData
+
 import commands
 
 class recognizer(object):
@@ -40,9 +41,17 @@ class recognizer(object):
         # Start node
         rospy.init_node("recognizer")
 
-        self._device_name_param = "~mic_name"  # Find the name of your microphone by typing pacmd list-sources in the terminal
+        # Find the name of your microphone by typing pacmd list-sources in the
+        # terminal.
+        self._device_name_param = "~mic_name"
         self._lm_param = "~lm"
         self._dic_param = "~dict"
+        self._audio_topic_param = "~audio_msg_topic"
+
+        # Audio ROS topic, if this is set the recognizer will subscribe to
+        # AudioData messages on this topic.
+        self._ros_audio_topic = None
+        self._app_source = None  # The gstreamer appsrc element
 
         # Configure mics with gstreamer launch config
         if rospy.has_param(self._device_name_param):
@@ -53,10 +62,17 @@ class recognizer(object):
         elif rospy.has_param('~source'):
             # common sources: 'alsasrc'
             self.launch_config = rospy.get_param('~source')
+        elif rospy.has_param(self._audio_topic_param):
+            # Use ROS audio messages as input: Use an appsrc to pass AudioData
+            # messages to the gstreamer pipeline. Use 'mad' plugin to decode
+            # mp3-formatted messages.
+            self.launch_config = 'appsrc name=appsrc ! mad'
+            self._ros_audio_topic = rospy.get_param(self._audio_topic_param)
+            rospy.loginfo('Using ROS audio messages as input')
         else:
             self.launch_config = 'gconfaudiosrc'
 
-        rospy.loginfo("Launch config: %s", self.launch_config)
+        rospy.loginfo("Audio input: {}".format(self.launch_config))
 
         self.launch_config += " ! audioconvert ! audioresample " \
                             + '! vader name=vad auto-threshold=true ' \
@@ -75,14 +91,29 @@ class recognizer(object):
             rospy.logwarn("lm and dic parameters need to be set to start recognizer.")
 
     def start_recognizer(self):
-        rospy.loginfo("Starting recognizer... ")
-
+        rospy.loginfo('Starting recognizer... pipeline: {}'.format(
+            self.launch_config))
         self.pipeline = gst.parse_launch(self.launch_config)
+        if not self.pipeline:
+            rospy.logerr('Could not create gstreamer pipeline.')
+            return
+        rospy.loginfo('gstreamer pipeline created.')
+
         self.asr = self.pipeline.get_by_name('asr')
         self.asr.connect('partial_result', self.asr_partial_result)
         self.asr.connect('result', self.asr_result)
         self.asr.set_property('configured', True)
         self.asr.set_property('dsratio', 1)
+
+        # If the ros audio topic exists, we subscribe to AudioData messages.
+        # Also make sure the appsource element was created properly.
+        if self._ros_audio_topic:
+            self._app_source = self.pipeline.get_by_name('appsrc')
+            rospy.Subscriber(
+                self._ros_audio_topic, AudioData, self.on_audio_message)
+            if not self._app_source:
+                rospy.logerr('Error getting the appsrc element.')
+                return
 
         # Configure language model
         if rospy.has_param(self._lm_param):
@@ -123,7 +154,8 @@ class recognizer(object):
 
     def shutdown(self):
         """ Delete any remaining parameters so they don't affect next launch """
-        for param in [self._device_name_param, self._lm_param, self._dic_param]:
+        for param in [self._device_name_param, self._lm_param, self._dic_param,
+                      self._audio_topic_param]:
             if rospy.has_param(param):
                 rospy.delete_param(param)
 
@@ -170,8 +202,19 @@ class recognizer(object):
         """ Insert the final result. """
         msg = String()
         msg.data = str(hyp.lower())
-        rospy.loginfo(msg.data)
+        rospy.loginfo('Final result: {}'.format(msg.data))
         self.pub.publish(msg)
+
+    def on_audio_message(self, audio):
+        # Callback for ROS audio messages -- emits the audio data to the
+        # gstreamer pipeline through the appsrc.
+        rospy.logdebug('Received audio packet of length {}'.format(
+            len(audio.data)))
+
+        if self._app_source:
+            self._app_source.emit('push-buffer',
+                                  gst.Buffer(str(bytearray(audio.data))))
+
 
 if __name__ == "__main__":
     start = recognizer()
