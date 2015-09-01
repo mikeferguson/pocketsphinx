@@ -1,0 +1,28 @@
+<launch>
+
+  <!--
+      Launch file for the speech recognizer (with the manipulator command
+      language model and ROS audio message subscription), and optionally the
+      microphone capture.
+
+      Usage:
+      roslaunch pocketsphinx robot_voice_control.launch
+
+      Usage (no microphone):
+      roslaunch pocketsphinx robot_voice_control.launch microphone:=0
+  -->
+
+  <arg name="microphone" default="1"/>  <!-- optional -->
+  <node name="microphone_capture" pkg="audio_capture" type="audio_capture"
+        if="$(arg microphone)">
+    <param name="bitrate" value="128"/>
+  </node>
+
+  <!-- subscribe to /audio ROS messages -->
+  <node name="recognizer" pkg="pocketsphinx" type="recognizer.py" output="screen">
+    <param name="lm" value="$(find pocketsphinx)/language_models/manipulator_command.lm" />
+    <param name="dict" value="$(find pocketsphinx)/language_models/manipulator_command.dict" />
+    <param name="audio_msg_topic" value="/audio" />
+  </node>
+
+</launch>
