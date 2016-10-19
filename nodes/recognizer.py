@@ -18,6 +18,8 @@ recognizer.py is a wrapper for pocketsphinx.
     ~stop (std_srvs/Empty) - stop speech recognition
 """
 
+import os
+import subprocess
 import roslib; roslib.load_manifest('pocketsphinx')
 import rospy
 
@@ -38,8 +40,7 @@ import gtk
 
 from std_msgs.msg import String
 from std_srvs.srv import *
-# import os
-# import commands
+
 
 class recognizer(object):
     """ GStreamer based speech recognizer. """
@@ -77,7 +78,7 @@ class recognizer(object):
             # common sources: 'alsasrc'
             self.launch_config = rospy.get_param('~source')
 
-        self.launch_config += ' autoaudiosrc ! audioconvert ! audioresample ' \
+        self.launch_config += 'autoaudiosrc ! audioconvert ! audioresample ' \
                                 '! pocketsphinx name=asr ! fakesink'
 
         rospy.loginfo("Launch config: %s", self.launch_config)
@@ -112,7 +113,6 @@ class recognizer(object):
         if rospy.has_param(self._hmm_param):
             hmm = rospy.get_param(self._hmm_param)
 
-
         self.asr.set_property('lm', lm)
         self.asr.set_property('dict', dic)
         if rospy.has_param(self._hmm_param):
@@ -120,12 +120,15 @@ class recognizer(object):
 
         self.bus = self.pipeline.get_bus()
         self.bus.add_signal_watch()
-        self.bus_id = self.bus.connect('message::application', self.application_message)
-        self.pipeline.set_state(gst.STATE_PLAYING)
+        self.bus_id = self.bus.connect('message::element', self.element_message)
+        self.pipeline.set_state(gst.State.PAUSED)
+
+        rospy.loginfo("Audio pipeline activated, waiting for voice...")
+        self.pipeline.set_state(gst.State.PLAYING)
         self.started = True
 
     def pulse_index_from_name(self, name):
-        output = commands.getstatusoutput("pacmd list-sources | grep -B 1 'name: <" + name + ">' | grep -o -P '(?<=index: )[0-9]*'")
+        output = subprocess.getstatusoutput("pacmd list-sources | grep -B 1 'name: <" + name + ">' | grep -o -P '(?<=index: )[0-9]*'")
 
         if len(output) == 2:
             return output[1]
@@ -134,7 +137,7 @@ class recognizer(object):
 
     def stop_recognizer(self):
         if self.started:
-            self.pipeline.set_state(gst.STATE_NULL)
+            self.pipeline.set_state(gst.State.PAUSED)
             self.pipeline.remove(self.asr)
             self.bus.disconnect(self.bus_id)
             self.started = False
@@ -158,17 +161,18 @@ class recognizer(object):
         rospy.loginfo("recognizer stopped")
         return EmptyResponse()
 
-    def application_message(self, bus, msg):
+    def element_message(self, bus, msg):
         """ Receive application messages from the bus. """
         msgtype = msg.get_structure().get_name()
         if msgtype != 'pocketsphinx':
+            rospy.loginfo("Received message with wrong type: " + msgtype)
             return
 
-        if msgtype == 'partial_result':
-            self.partial_result(msg.get_structure().get_value('hypothesis'))
-        if msgtype == 'hypothesis':
+        if msg.get_structure().get_value('final'):
             self.final_result(msg.get_structure().get_value('hypothesis'),
                               msg.get_structure().get_value('confidence'))
+        if msg.get_structure().get_value('hypothesis'):
+            self.partial_result(msg.get_structure().get_value('hypothesis'))
 
     def partial_result(self, hyp):
         """ Delete any previous selection, insert text and select it. """
@@ -178,7 +182,7 @@ class recognizer(object):
         """ Insert the final result. """
         msg = String()
         msg.data = str(hyp.lower())
-        rospy.loginfo(msg.data, " :: confidence = ", confidence)
+        rospy.loginfo("{0} :: confidence = {1}".format(msg.data, confidence))
         self.pub.publish(msg)
 
 if __name__ == "__main__":
