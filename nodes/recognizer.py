@@ -46,6 +46,8 @@ class recognizer(object):
     """ GStreamer based speech recognizer. """
 
     def __init__(self):
+        self.started = False
+
         # Start node
         rospy.init_node("recognizer")
 
@@ -66,8 +68,6 @@ class recognizer(object):
             rospy.logwarn("lm and dic parameters need to be set to start recognizer.")
 
     def init_gst(self):
-        self.launch_config = ''
-
         # Configure mics with gstreamer launch config
         if rospy.has_param(self._device_name_param):
             self.device_name = rospy.get_param(self._device_name_param)
@@ -77,15 +77,16 @@ class recognizer(object):
         elif rospy.has_param('~source'):
             # common sources: 'alsasrc'
             self.launch_config = rospy.get_param('~source')
+        else:
+            self.launch_config = ""
 
-        self.launch_config += 'autoaudiosrc ! audioconvert ! audioresample ' \
+        self.launch_config += ' autoaudiosrc ! audioconvert ! audioresample ' \
                                 '! pocketsphinx name=asr ! fakesink'
 
         rospy.loginfo("Launch config: %s", self.launch_config)
 
     def init_ros(self):
         # Configure ROS settings
-        self.started = False
         rospy.on_shutdown(self.shutdown)
         self.pub = rospy.Publisher('~output', String, queue_size=100)
         rospy.Service("~start", Empty, self.start)
@@ -137,6 +138,8 @@ class recognizer(object):
 
     def stop_recognizer(self):
         if self.started:
+            rospy.loginfo("Recognition stopped")
+
             self.pipeline.set_state(gst.State.PAUSED)
             self.pipeline.remove(self.asr)
             self.bus.disconnect(self.bus_id)
@@ -171,7 +174,12 @@ class recognizer(object):
         if msg.get_structure().get_value('final'):
             self.final_result(msg.get_structure().get_value('hypothesis'),
                               msg.get_structure().get_value('confidence'))
-        if msg.get_structure().get_value('hypothesis'):
+
+            # Some hacking - we need to reset status of stream
+            self.pipeline.set_state(gst.State.PAUSED)
+            self.pipeline.set_state(gst.State.PLAYING)
+
+        elif msg.get_structure().get_value('hypothesis'):
             self.partial_result(msg.get_structure().get_value('hypothesis'))
 
     def partial_result(self, hyp):
@@ -182,9 +190,9 @@ class recognizer(object):
         """ Insert the final result. """
         msg = String()
         msg.data = str(hyp.lower())
-        rospy.loginfo("{0} :: confidence = {1}".format(msg.data, confidence))
+        rospy.loginfo("%s :: confidence = %d", msg.data, confidence)
         self.pub.publish(msg)
 
 if __name__ == "__main__":
-    start = recognizer()
+    _start = recognizer()
     gtk.main()
