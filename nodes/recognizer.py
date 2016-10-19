@@ -151,6 +151,8 @@ class recognizer(object):
             if rospy.has_param(param):
                 rospy.delete_param(param)
 
+        self.pipeline.set_state(gst.State.NULL)
+
         """ Shutdown the GTK thread. """
         gtk.main_quit()
 
