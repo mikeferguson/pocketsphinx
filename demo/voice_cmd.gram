@@ -1,0 +1,15 @@
+#JSGF V1.0;
+
+/**
+ * JSGF Grammar similar to kws example
+ */
+
+grammar voice_cmd;
+
+public <move> = MOVE FORWARD;
+
+public <move2> = MOVE <direction> [<speed>];
+
+<direction> = FORWARD | BACK | LEFT | RIGHT;
+
+<speed> = FULL SPEED | HALF SPEED;

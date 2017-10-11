@@ -1,0 +1,90 @@
+<launch>
+    
+    <!--
+    Args with no default attribute are not optional
+    -->
+    <arg name="input" default=":default"/>
+    <arg name="hmm" default=":default" />
+    <arg name="sphmm" default=":default" />
+    <arg name="dict" />
+    <arg name="spdict" />
+    <arg name="kws" default=":default"/>
+    <arg name="spkws" default=":default"/>
+    <arg name="keyphrase" default=":default"/>
+    <arg name="spkeyphrase" default=":default"/>
+    <arg name="threshold" default=":default"/>
+    <arg name="spthreshold" default=":default"/>
+    <arg name="sp_verif" default="true" />
+    <arg name="lm" default=":default" />
+    <arg name="gram" default=":default"/>
+    <arg name="grammar" default=":default"/>
+    <arg name="rule" default=":default"/>
+
+    <!--
+    Node for publishing audio inputs
+    -->
+    <node
+        name="audio_control"
+        pkg="pocketsphinx"
+        type="send_audio.py"
+        output="screen"
+        >
+        <param name="input" value="$(arg input)"/>
+    </node>
+
+    <!--
+    Node for handling jsgf grammar mode
+    -->
+    <node
+        name="asr_control"
+        pkg="pocketsphinx"
+        type="asr_test.py"
+        output="screen"
+        >
+        <param name="lm" value="$(arg lm)"/>
+        <param name="dict" value="$(arg dict)"/>
+        <param name="hmm" value="$(arg hmm)"/>
+        <param name="gram" value="$(arg gram)"/>
+        <param name="grammar" value="$(arg grammar)"/>
+        <param name="rule" value="$(arg rule)"/>
+    </node>
+
+    <!--
+    Node for handling kws mode
+    -->
+    <node
+        name="kws_control"
+        pkg="pocketsphinx"
+        type="speaker_verification_example.py"
+        output="screen"
+        >
+        <param name="node_name" value="kws_control" />
+        <param name="speaker" value="1" />
+        <param name="hmm" value="$(arg hmm)"/>
+        <param name="dict" value="$(arg dict)"/>
+        <param name="kws" value="$(arg kws)"/>
+        <param name="keyphrase" value="$(arg keyphrase)"/>
+        <param name="threshold" value="$(arg threshold)"/>
+        <param name="sp_verif" value="$(arg sp_verif)"/>
+
+    </node>
+
+    <!--
+    Node for handling speaker verification
+    -->
+    <node
+        name="speaker_verification"
+        pkg="pocketsphinx"
+        type="speaker_verification_example.py"
+        output="screen"
+        >
+        <param name="node_name" value="speaker_verification" />
+        <param name="hmm" value="$(arg sphmm)"/>
+        <param name="dict" value="$(arg spdict)"/>
+        <param name="kws" value="$(arg spkws)"/>
+        <param name="keyphrase" value="$(arg spkeyphrase)"/>
+        <param name="threshold" value="$(arg spthreshold)"/>
+        <param name="option" value="continuous" />
+
+    </node>
+</launch>

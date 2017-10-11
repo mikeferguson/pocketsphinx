@@ -1,0 +1,8 @@
+BACK /1e-9/
+FORWARD /1e-25/
+FULL SPEED /1e-20/
+HALF SPEED /1e-20/
+LEFT /1e-5/
+MOVE /1e-5/
+RIGHT /1e-15/
+STOP /1e-8/

@@ -2,6 +2,30 @@
 Changelog for package pocketsphinx
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.1 (2017-09-13)
+------------------
+* Following PEP8 guidelines
+* Adding backward compatibility
+* New model for speaker verification
+* Examples
+* keyword spotting mode and grammar mode dict and kwlist
+* speaker verification based continous mode
+* simple audio recorder
+* continuous mode working
+* kws threshold automation working.
+* Better false alarm correction
+* Background recording using rec accomplished. kws search working!
+* Integrated kws
+* Contributors: Pankaj Baranwal
+
+1.0.0 (2017-06-13)
+------------------
+* revamped package with latest ROS recommendations and pocketsphinx features
+* removed external dependencies
+* following PEP-8 style guidelines
+* added proper documentation as wiki and comments
+* Contributors: Pankaj Baranwal
+
 0.4.0 (2014-06-03)
 ------------------
 * add ~source parameter, for setting things like 'alsasrc'
