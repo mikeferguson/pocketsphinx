@@ -30,7 +30,7 @@ This package is an attempt to bring offline speech recognition to ROS. Pocketsph
 Clone this repository into the src folder of your catkin workspace using:  
 ```  
 cd ~/catkin_ws/src
-git clone https://github.com/Pankaj-Baranwal/pocketsphinx
+git clone https://github.com/Pankaj-Baranwal/cmu-pocketsphinx
 ```
 To know more about catkin workspace and ROS, follow instructions at: http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment  
 After everything is setup, open a terminal from your catkin workspace and type the following command:  
