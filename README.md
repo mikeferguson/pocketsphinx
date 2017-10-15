@@ -6,6 +6,8 @@ Also used repo: https://github.com/gorinars/ros_voice_control
 You can know more about pocketpshinx here: https://cmusphinx.github.io/  
   
 This package is an attempt to bring offline speech recognition to ROS. Pocketsphinx already offers many easy-to-use features in this domain, hence this package can be considered as an extension of pocketsphinx in the ROS world!  
+  
+To know more about how to use this package, you should follow the Wiki section above.
 
 ## Dependencies  
 1) pyaudio  
