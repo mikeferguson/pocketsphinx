@@ -4,11 +4,8 @@ project(pocketsphinx)
 find_package(catkin REQUIRED)
 catkin_package(DEPENDS)
 
+# catkin_package()
+
+
 install(DIRECTORY demo
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
-install(PROGRAMS nodes/recognizer.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-install(PROGRAMS nodes/voice_cmd_vel.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

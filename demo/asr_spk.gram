@@ -1,0 +1,9 @@
+#JSGF V1.0;
+
+/**
+ * JSGF Grammar for Turtle example
+ */
+
+grammar asr;
+
+public <rule> = GO TO MY WORKSPACE | WHERE IS AVENGER BASE | WHAT TIME IS IT | GOOD NIGHT JARVIS;

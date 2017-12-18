@@ -1,0 +1,61 @@
+<launch>
+
+    <arg name="input" default=":default"/>
+    <arg name="dict" />
+    <arg name="lm" default=":default" />
+    <arg name="kws" default=":default"/>
+    <arg name="keyphrase" default=":default"/>
+    <arg name="threshold" default=":default"/>
+    <arg name="hmm" default=":default"/>
+    <arg name="gram" default=":default"/>
+    <arg name="grammar" default=":default"/>
+    <arg name="rule" default=":default"/>
+
+    <!--
+    Node for publishing audio inputs
+    -->
+    <node
+        name="audio_control"
+        pkg="pocketsphinx"
+        type="send_audio.py"
+        output="screen"
+        >
+        <param name="input" value="$(arg input)"/>
+    </node>
+
+	<!--
+    Node for handling jsgf grammar mode
+    -->
+    <node
+        name="asr_control"
+        pkg="pocketsphinx"
+        type="asr_test.py"
+        output="screen"
+        >
+        <param name="lm" value="$(arg lm)"/>
+        <param name="dict" value="$(arg dict)"/>
+        <param name="hmm" value="$(arg hmm)"/>
+        <param name="gram" value="$(arg gram)"/>
+        <param name="grammar" value="$(arg grammar)"/>
+        <param name="rule" value="$(arg rule)"/>
+    </node>
+
+
+    <!--
+    Node for handling kws mode
+    -->
+    <node
+        name="kws_control"
+        pkg="pocketsphinx"
+        type="kws_test.py"
+        output="screen"
+        >
+        <param name="hmm" value="$(arg hmm)"/>
+        <param name="dict" value="$(arg dict)"/>
+        <param name="kws" value="$(arg kws)"/>
+        <param name="keyphrase" value="$(arg keyphrase)"/>
+        <param name="threshold" value="$(arg threshold)"/>
+        <param name="option" value="continuous" />
+
+    </node>
+</launch>

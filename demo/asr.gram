@@ -1,0 +1,15 @@
+#JSGF V1.0;
+
+/**
+ * JSGF Grammar for Turtle example
+ */
+
+grammar asr;
+
+public <rule> = <action> [<preposition>] [<objects>] [<preposition>] [<objects>];
+
+<action> = BRING ME | GET ME | WASH AND DRY;
+
+<objects> = COFFEE | THE KITCHEN | MY CLOTHES | AVENGER BASE;
+
+<preposition> = FROM | TO;

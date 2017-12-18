@@ -1,0 +1,44 @@
+<launch>
+
+    <!--
+    Args with no default attribute are not optional
+    -->
+    <arg name="input" default=":default"/>
+    <arg name="hmm" default=":default"/>
+    <arg name="dict"/>
+    <arg name="lm" default=":default"/>
+    <arg name="gram" default=":default"/>
+    <arg name="grammar" default=":default"/>
+    <arg name="rule" default=":default"/>
+    
+    <!--
+    Node for handling jsgf grammar mode
+    -->
+	<node
+		name="asr_control"
+		pkg="pocketsphinx"
+		type="asr_test.py"
+        output="screen"
+        >
+        <remap from="jsgf_audio" to="sphinx_audio" />
+        <param name="lm" value="$(arg lm)"/>
+        <param name="dict" value="$(arg dict)"/>
+        <param name="hmm" value="$(arg hmm)"/>
+        <param name="gram" value="$(arg gram)"/>
+        <param name="grammar" value="$(arg grammar)"/>
+        <param name="rule" value="$(arg rule)"/>
+	</node>
+
+    <!--
+    Node for publishing audio inputs
+    -->
+    <node
+        name="audio_control"
+        pkg="pocketsphinx"
+        type="send_audio.py"
+        output="screen"
+        >
+
+        <param name="input" value="$(arg input)"/>
+    </node>
+</launch>
