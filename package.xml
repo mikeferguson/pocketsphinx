@@ -1,12 +1,12 @@
 <?xml version="2.0"?>
 <package format="2">
   <name>pocketsphinx</name>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <description>
     ROS package for pocketsphinx speech recognizer
   </description>
   <author>Pankaj Baranwal, Michael Ferguson</author>
-  <maintainer email="pankajbaranwal@lithics.in">Pankaj Baranwal</maintainer>
+  <maintainer email="pankaj11520@ducic.ac.in">Pankaj Baranwal</maintainer>
   <license>BSD</license>
   <url type="website">http://github.com/Pankaj-Baranwal/cmu-pocketsphinx</url>
 
