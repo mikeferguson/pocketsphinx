@@ -1,0 +1,9 @@
+<launch>
+  <include file="$(find pocketsphinx)/launch/asr.launch">
+    <arg name="hmm" value="$(find pocketsphinx)/model/en-us" />
+    <arg name="lm" value="$(find pocketsphinx)/model/5183.lm" />
+    <arg name="dict" value="$(find pocketsphinx)/model/5183.dic" />
+    <arg name="gram" value="$(find pocketsphinx)/model/5183.vocab" />
+    <arg name="grammar" value="$(find pocketsphinx)/model/5183.log_pronounce" />
+  </include>
+</launch>
