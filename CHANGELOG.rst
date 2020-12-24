@@ -2,6 +2,14 @@
 Changelog for package pocketsphinx
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.0 (2020-12-24)
+------------------
+* migrate codebase to work with ROS Noetic
+* add source parameter to launch file
+* add depends to package.xml
+* add queue_size argument to publisher instances
+* Contributors: Murat Calis
+
 0.4.0 (2014-06-03)
 ------------------
 * add ~source parameter, for setting things like 'alsasrc'

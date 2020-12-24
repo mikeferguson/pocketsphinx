@@ -15,23 +15,19 @@ recognizer.py is a wrapper for pocketsphinx.
     ~stop (std_srvs/Empty) - stop speech recognition
 """
 
-import roslib; roslib.load_manifest('pocketsphinx')
 import rospy
 
-import pygtk
-pygtk.require('2.0')
-import gtk
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('Gst', '1.0')
 
-import gobject
-import pygst
-pygst.require('0.10')
-gobject.threads_init()
-import gst
+from gi.repository import Gtk as gtk, GObject as gobject, Gst as gst
 
 from std_msgs.msg import String
 from std_srvs.srv import *
+
 import os
-import commands
+import subprocess as commands
 
 class recognizer(object):
     """ GStreamer based speech recognizer. """
@@ -59,17 +55,17 @@ class recognizer(object):
         rospy.loginfo("Launch config: %s", self.launch_config)
 
         self.launch_config += " ! audioconvert ! audioresample " \
-                            + '! vader name=vad auto-threshold=true ' \
                             + '! pocketsphinx name=asr ! fakesink'
 
         # Configure ROS settings
         self.started = False
         rospy.on_shutdown(self.shutdown)
-        self.pub = rospy.Publisher('~output', String)
+        self.pub = rospy.Publisher('~output', String, queue_size=10)
         rospy.Service("~start", Empty, self.start)
         rospy.Service("~stop", Empty, self.stop)
 
         if rospy.has_param(self._lm_param) and rospy.has_param(self._dic_param):
+            gst.init(None)
             self.start_recognizer()
         else:
             rospy.logwarn("lm and dic parameters need to be set to start recognizer.")
@@ -79,9 +75,6 @@ class recognizer(object):
 
         self.pipeline = gst.parse_launch(self.launch_config)
         self.asr = self.pipeline.get_by_name('asr')
-        self.asr.connect('partial_result', self.asr_partial_result)
-        self.asr.connect('result', self.asr_result)
-        self.asr.set_property('configured', True)
         self.asr.set_property('dsratio', 1)
 
         # Configure language model
@@ -102,8 +95,8 @@ class recognizer(object):
 
         self.bus = self.pipeline.get_bus()
         self.bus.add_signal_watch()
-        self.bus_id = self.bus.connect('message::application', self.application_message)
-        self.pipeline.set_state(gst.STATE_PLAYING)
+        self.bus_id = self.bus.connect('message::element', self.element_message)
+        self.pipeline.set_state(gst.State.PLAYING)
         self.started = True
 
     def pulse_index_from_name(self, name):
@@ -116,7 +109,7 @@ class recognizer(object):
 
     def stop_recognizer(self):
         if self.started:
-            self.pipeline.set_state(gst.STATE_NULL)
+            self.pipeline.set_state(gst.State.NULL)
             self.pipeline.remove(self.asr)
             self.bus.disconnect(self.bus_id)
             self.started = False
@@ -140,40 +133,24 @@ class recognizer(object):
         rospy.loginfo("recognizer stopped")
         return EmptyResponse()
 
-    def asr_partial_result(self, asr, text, uttid):
-        """ Forward partial result signals on the bus to the main thread. """
-        struct = gst.Structure('partial_result')
-        struct.set_value('hyp', text)
-        struct.set_value('uttid', uttid)
-        asr.post_message(gst.message_new_application(asr, struct))
+    def element_message(self, bus, msg):
+        if msg.get_structure().get_value('final'):
+            self.final_result(msg.get_structure().get_value('hypothesis'))
+        elif msg.get_structure().get_value('hypothesis'):
+            self.partial_result(msg.get_structure().get_value('hypothesis'))
 
-    def asr_result(self, asr, text, uttid):
-        """ Forward result signals on the bus to the main thread. """
-        struct = gst.Structure('result')
-        struct.set_value('hyp', text)
-        struct.set_value('uttid', uttid)
-        asr.post_message(gst.message_new_application(asr, struct))
-
-    def application_message(self, bus, msg):
-        """ Receive application messages from the bus. """
-        msgtype = msg.structure.get_name()
-        if msgtype == 'partial_result':
-            self.partial_result(msg.structure['hyp'], msg.structure['uttid'])
-        if msgtype == 'result':
-            self.final_result(msg.structure['hyp'], msg.structure['uttid'])
-
-    def partial_result(self, hyp, uttid):
+    def partial_result(self, hyp):
         """ Delete any previous selection, insert text and select it. """
         rospy.logdebug("Partial: " + hyp)
 
-    def final_result(self, hyp, uttid):
-        """ Insert the final result. """
-        msg = String()
-        msg.data = str(hyp.lower())
-        rospy.loginfo(msg.data)
-        self.pub.publish(msg)
+    def final_result(self, hyp):
+        if len(hyp) > 1:
+            """ Insert the final result. """
+            msg = String()
+            msg.data = str(hyp.lower())
+            rospy.loginfo(msg.data)
+            self.pub.publish(msg)
 
 if __name__ == "__main__":
     start = recognizer()
     gtk.main()
-
