@@ -6,7 +6,6 @@ voice_cmd_vel.py is a simple demo of speech recognition.
   in the corpus file.
 """
 
-import roslib; roslib.load_manifest('pocketsphinx')
 import rospy
 import math
 
