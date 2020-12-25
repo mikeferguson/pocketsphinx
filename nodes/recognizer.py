@@ -144,7 +144,7 @@ class recognizer(object):
         rospy.logdebug("Partial: " + hyp)
 
     def final_result(self, hyp):
-        if len(hyp) > 1:
+        if len(hyp) > 0:
             """ Insert the final result. """
             msg = String()
             msg.data = str(hyp.lower())
