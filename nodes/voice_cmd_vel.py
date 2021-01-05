@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 voice_cmd_vel.py is a simple demo of speech recognition.
