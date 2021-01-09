@@ -17,11 +17,18 @@ recognizer.py is a wrapper for pocketsphinx.
 
 import rospy
 
+from gi import pygtkcompat
 import gi
-gi.require_version('Gtk', '3.0')
 gi.require_version('Gst', '1.0')
 
-from gi.repository import Gtk as gtk, GObject as gobject, Gst as gst
+from gi.repository import GObject, Gst
+Gst.init(None)
+gst = Gst
+
+pygtkcompat.enable() 
+pygtkcompat.enable_gtk(version='3.0')
+
+import gtk
 
 from std_msgs.msg import String
 from std_srvs.srv import *
@@ -65,7 +72,6 @@ class recognizer(object):
         rospy.Service("~stop", Empty, self.stop)
 
         if rospy.has_param(self._lm_param) and rospy.has_param(self._dic_param):
-            gst.init(None)
             self.start_recognizer()
         else:
             rospy.logwarn("lm and dic parameters need to be set to start recognizer.")
