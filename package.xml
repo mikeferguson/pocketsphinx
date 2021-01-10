@@ -1,4 +1,4 @@
-<package>
+<package format="3">
   <name>pocketsphinx</name>
   <version>0.4.0</version>
   <description>
@@ -12,10 +12,11 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>rospy</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>std_srvs</run_depend>
-  <run_depend>geometry_msgs</run_depend><!-- only needed for demos -->
-  <run_depend>gstreamer0.10-pocketsphinx</run_depend>
-  <run_depend>python-gst</run_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend><!-- only needed for demos -->
+  <exec_depend>python3-pocketsphinx</exec_depend>
+  <exec_depend>gstreamer1.0-pocketsphinx</exec_depend>
+  <exec_depend>python3-gst-1.0</exec_depend>
 </package>

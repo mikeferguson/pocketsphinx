@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 voice_cmd_vel.py is a simple demo of speech recognition.
@@ -6,7 +6,6 @@ voice_cmd_vel.py is a simple demo of speech recognition.
   in the corpus file.
 """
 
-import roslib; roslib.load_manifest('pocketsphinx')
 import rospy
 import math
 
@@ -21,7 +20,7 @@ class voice_cmd_vel:
         self.msg = Twist()
 
         # publish to cmd_vel, subscribe to speech output
-        self.pub_ = rospy.Publisher('cmd_vel', Twist)
+        self.pub_ = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         rospy.Subscriber('recognizer/output', String, self.speechCb)
 
         r = rospy.Rate(10.0)
