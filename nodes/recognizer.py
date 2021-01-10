@@ -28,16 +28,19 @@ from gi.repository import GObject, Gst
 Gst.init(None)
 gst = Gst
 
-pygtkcompat.enable() 
+pygtkcompat.enable()
 pygtkcompat.enable_gtk(version='3.0')
 
 import gtk
 
 from std_msgs.msg import String
-from std_srvs.srv import *
+from std_srvs.srv import Empty, EmptyResponse
 
 import os
-import subprocess as commands
+try:
+    import commands
+except ImportError:
+    import subprocess as commands
 
 class recognizer(object):
     """ GStreamer based speech recognizer. """
