@@ -5,6 +5,9 @@ recognizer.py is a wrapper for pocketsphinx.
   parameters:
     ~lm - filename of language model
     ~dict - filename of dictionary
+    ~hmm - directory name of acoustic model.
+                By default it would be "/usr/share/pocketsphinx/model/hmm/en_US/hub4wsj_sc_8k"
+                You can download custom acoustic models from CMU Sphix web site: https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/
     ~mic_name - set the pulsesrc device name for the microphone input.
                 e.g. a Logitech G35 Headset has the following device name: alsa_input.usb-Logitech_Logitech_G35_Headset-00-Headset_1.analog-mono
                 To list audio device info on your machine, in a terminal type: pacmd list-sources
@@ -46,6 +49,7 @@ class recognizer(object):
         self._device_name_param = "~mic_name"  # Find the name of your microphone by typing pacmd list-sources in the terminal
         self._lm_param = "~lm"
         self._dic_param = "~dict"
+        self._hmm_param = "~hmm"
 
         # Configure mics with gstreamer launch config
         if rospy.has_param(self._device_name_param):
@@ -96,8 +100,14 @@ class recognizer(object):
             rospy.logerr('Recognizer not started. Please specify a dictionary.')
             return
 
+        if rospy.has_param(self._hmm_param):
+            hmm = rospy.get_param(self._hmm_param)
+
+
         self.asr.set_property('lm', lm)
         self.asr.set_property('dict', dic)
+        if rospy.has_param(self._hmm_param):
+            self.asr.set_property('hmm', hmm)
 
         self.bus = self.pipeline.get_bus()
         self.bus.add_signal_watch()
@@ -122,7 +132,7 @@ class recognizer(object):
 
     def shutdown(self):
         """ Delete any remaining parameters so they don't affect next launch """
-        for param in [self._device_name_param, self._lm_param, self._dic_param]:
+        for param in [self._device_name_param, self._lm_param, self._dic_param, self._hmm_param]:
             if rospy.has_param(param):
                 rospy.delete_param(param)
 
