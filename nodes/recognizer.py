@@ -90,6 +90,9 @@ class recognizer(object):
         self.asr = self.pipeline.get_by_name('asr')
         self.asr.set_property('dsratio', 1)
 
+        rospy.loginfo(dir(self.asr))
+        rospy.loginfo(self.asr.list_properties())
+
         # Configure language model
         if rospy.has_param(self._lm_param):
             lm = rospy.get_param(self._lm_param)
